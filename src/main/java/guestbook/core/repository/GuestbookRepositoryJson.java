@@ -63,15 +63,19 @@ public class GuestbookRepositoryJson implements GuestbookRepository {
     public void save(GuestRecord guestRecord) throws RepositoryException {
         JsonArray records;
         try {
-            records = readRecordsFromFile();
+            records = Json.createArrayBuilder(readRecordsFromFile())
+                            .add(guestRecordToJsonObject(guestRecord))
+                            .build();
         } catch (Exception e) {
             throw new RepositoryException("Problem podczas odczytu", e);
         }
+        writeJsonArrayToFile(records);
+    }
 
+    private void writeJsonArrayToFile(JsonArray records) throws RepositoryException {
         try (JsonWriter writer = Json.createWriter(new FileWriter(repositoryFile))) {
-            JsonObject record = guestRecordToJsonObject(guestRecord);
 
-            JsonArrayBuilder resultArrayBuilder = Json.createArrayBuilder(records).add(record);
+            JsonArray resultArrayBuilder = Json.createArrayBuilder(records).build();
             JsonObject result = Json.createObjectBuilder()
                     .add("records", resultArrayBuilder)
                     .build();
@@ -85,6 +89,16 @@ public class GuestbookRepositoryJson implements GuestbookRepository {
     @Override
     public void delete(GuestRecord guestRecord) throws RepositoryException {
 
+        try {
+            JsonArrayBuilder jsonArrayBuilder = Json.createArrayBuilder();
+            JsonArray jsonArray = readRecordsFromFile();
+            jsonArray.stream()
+                     .filter(jo -> !guestRecord.getUuid().equals(jsonRecordToGuestRecord(jo).getUuid()))
+                     .forEach(jsonArrayBuilder::add);
+            writeJsonArrayToFile(jsonArrayBuilder.build());
+        } catch (Exception e) {
+            throw new RepositoryException("Problem podczas usuwania", e);
+        }
     }
 
     private JsonObject guestRecordToJsonObject(GuestRecord guestRecord) {

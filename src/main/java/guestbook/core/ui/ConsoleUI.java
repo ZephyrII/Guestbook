@@ -1,10 +1,10 @@
 package guestbook.core.ui;
 
-import guestbook.core.GuestbookReader;
 import guestbook.core.model.GuestRecord;
 import guestbook.core.repository.GuestbookRepository;
 import guestbook.core.repository.RepositoryException;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
@@ -25,6 +25,7 @@ public class ConsoleUI {
                                            "Aby dodać wpis, wpisz " + WRITE_MODE +
                                            "\nAby wyświetlić wpisy wpisz " + READ_MODE +
                                            "\nAby usunąć wpis, wpisz " + DELETE_MODE; /** Message displayed at program start  */
+    public static final String DETAIL_HELLO_MSG = "Aby wyświelić szczegóły gościa wprowadź jego dane."; /** Information how to use detailed read mode  */
 
     /**
      * Method for dispalying messages in UI
@@ -52,7 +53,7 @@ public class ConsoleUI {
             } else if (selectedMode.equals(DELETE_MODE)) {
                 displayMsg(DELETE_MODE_SELECTED);
                 return DELETE_MODE;
-            }else {
+            } else {
                 displayMsg(WRONG_MODE_SELECTED);
                 displayMsg(HELLO_MSG);
                 selectedMode = sc.next();
@@ -79,15 +80,35 @@ public class ConsoleUI {
                 processDeleteGuest(guestbookRepository);
                 break;
             }
-            default: { //TODO handle this
-
+            default: {
+                break;
             }
         }
     }
 
-    private void processReadGuest(GuestbookRepository guestbookRepository) {//TODO add search
-        GuestbookReader guestbookReader = new GuestbookReader();
-        guestbookReader.displayAll(guestbookRepository);
+    private void processReadGuest(GuestbookRepository guestbookRepository) {
+        displayAll(guestbookRepository);
+        displayDetails(guestbookRepository);
+    }
+
+    private void displayDetails(GuestbookRepository guestbookRepository) {
+        displayMsg(DETAIL_HELLO_MSG);
+        String firstName = getUserInput("Podaj imię");
+        String lastName = getUserInput("Podaj nazwisko");
+        try {
+            List<GuestRecord> foundRecords = findRecordByName(firstName, lastName, guestbookRepository);
+            foundRecords.forEach(o -> System.out.println(o.toDetailedString()));
+        } catch (Exception e) {
+
+        }
+    }
+
+    private void displayAll(GuestbookRepository guestbookRepository) {
+        try {
+            guestbookRepository.getAllGuests().forEach(System.out::println);
+        } catch (Exception e) {
+
+        }
     }
 
     private void processWriteGuest(GuestbookRepository guestbookRepository) {
@@ -103,18 +124,29 @@ public class ConsoleUI {
         String firstName = getUserInput("Podaj imię");
         String lastName = getUserInput("Podaj nazwisko");
         try {
-            List<GuestRecord>  guestRecords = guestbookRepository.getAllGuests();
-            Iterator<GuestRecord> it = guestRecords.iterator();
-            while(it.hasNext()) {
-                GuestRecord guestRecord = it.next();
-                if(guestRecord.getFirstName().equals(firstName)&&guestRecord.getLastName().equals(lastName)) {
-                    guestbookRepository.delete(guestRecord);
-                }
+            List<GuestRecord> foundRecords = findRecordByName(firstName, lastName, guestbookRepository);
+            for (GuestRecord foundRecord : foundRecords) {
+                guestbookRepository.delete(foundRecord);
             }
         } catch(RepositoryException e) {
 
         }
     }
+
+    private List<GuestRecord> findRecordByName(String firstName, String lastName, GuestbookRepository guestbookRepository) throws RepositoryException {
+
+        List<GuestRecord> guestRecords = guestbookRepository.getAllGuests();
+        List<GuestRecord> foundRecords = new ArrayList<>();
+        Iterator<GuestRecord> it = guestRecords.iterator();
+        while(it.hasNext()) {
+            GuestRecord guestRecord = it.next();
+            if(guestRecord.getFirstName().equals(firstName)&&guestRecord.getLastName().equals(lastName)) {
+                foundRecords.add(guestRecord);
+            }
+        }
+        return foundRecords;
+    }
+
     private String getUserInput(String displayedMessage){
         Scanner sc = new Scanner(System.in);
         displayMsg(displayedMessage);

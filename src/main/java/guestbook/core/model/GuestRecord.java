@@ -41,7 +41,12 @@ public class GuestRecord {
 
     @Override
     public String toString() {
-        return "UUID: " + this.uuid.toString() +
+        return  " First name: " + this.firstName +
+                " Last name: " + this.lastName;
+    }
+
+    public String toDetailedString() {
+        return  "Uuid:" + this.uuid.toString() +
                 " First name: " + this.firstName +
                 " Last name: " + this.lastName +
                 " Date: " + this.date.toString();
