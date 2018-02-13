@@ -14,9 +14,10 @@ repositories {
     jcenter()
 }
 dependencies {
-    compile group: 'org.apache.commons', name: 'commons-csv', version: '1.1'
+    compile 'org.apache.commons:commons-csv:1.1'
     compile 'org.glassfish:javax.json:1.1'
-    compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.45'
+    compile 'mysql:mysql-connector-java:5.1.45'
+    compile 'org.mongodb:mongodb-driver:3.6.2'
 }
 
 jar {
