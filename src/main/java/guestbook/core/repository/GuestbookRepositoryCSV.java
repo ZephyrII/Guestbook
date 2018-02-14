@@ -2,6 +2,10 @@ package guestbook.core.repository;
 
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -24,7 +28,7 @@ public class GuestbookRepositoryCSV implements GuestbookRepository {
     }
 
     public void save(GuestRecord guestRecord) throws RepositoryException {
-        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");//TODO ???
         try (CSVPrinter csvPrinter = new CSVPrinter(new FileWriter(repositoryFile, true), CSVFormat.DEFAULT)) {
             csvPrinter.print(guestRecord.getUuid());
             csvPrinter.print(guestRecord.getFirstName());
@@ -40,6 +44,20 @@ public class GuestbookRepositoryCSV implements GuestbookRepository {
     @Override
     public void delete(GuestRecord guestRecord) throws RepositoryException {
 
+        try {
+            List<GuestRecord> records = getAllGuests();
+            Files.newOutputStream(Paths.get(repositoryFile));
+            records.stream().filter(gr->!gr.getUuid().equals(guestRecord.getUuid())).forEach(gr-> {//TODO ???
+                try {
+                    save(gr);
+                } catch (RepositoryException e) {
+                    throw new RuntimeException(e);
+//                    throw e;
+                }
+            });
+        } catch (Exception e) {
+            throw new RepositoryException("Problem podczas usuwania", e);
+        }
     }
 
     public List<GuestRecord> getAllGuests() throws RepositoryException {
@@ -54,7 +72,7 @@ public class GuestbookRepositoryCSV implements GuestbookRepository {
     }
 
     private GuestRecord csvRecordToGuestRecord(CSVRecord r) throws RuntimeException {
-        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss"); //TODO ???
         try {
             UUID gUUID = UUID.fromString(r.get("uuid"));
             String gFirstName = r.get("firstName");

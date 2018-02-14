@@ -30,14 +30,14 @@ public class GuestbookRepositoryMongo implements GuestbookRepository {
         SimpleDateFormat sdf = createFormatter();
         List<GuestRecord> records = new ArrayList<>();
         try {
-            Block<Document> reader = record -> {
+            Block<Document> reader = record -> { //TODO ???
                 try {
                     String uuid = record.getString("uuid");
                     String firstName = record.getString("firstName");
                     String lastName = record.getString("lastName");
                     String date = record.getString("date");
-//                    Date gDate = sdf.parse(date);
-                    records.add(new GuestRecord(UUID.fromString(uuid), firstName, lastName, new Date()));
+                    Date gDate = sdf.parse(date);
+                    records.add(new GuestRecord(UUID.fromString(uuid), firstName, lastName, gDate));
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -57,8 +57,7 @@ public class GuestbookRepositoryMongo implements GuestbookRepository {
             mongoCollection.insertOne(new Document("uuid", guestRecord.getUuid().toString())
                                             .append("firstName", guestRecord.getFirstName())
                                             .append("lastName", guestRecord.getLastName())
-                                            .append("date", guestRecord.getDate().toString()));
-
+                                            .append("date", createFormatter().format(guestRecord.getDate())));
 
         } catch (Exception e) {
             throw new RepositoryException("Problem podczas zapisu", e);
@@ -69,8 +68,15 @@ public class GuestbookRepositoryMongo implements GuestbookRepository {
     @Override
     public void delete(GuestRecord guestRecord) throws RepositoryException {
 
+        try {
+            MongoCollection mongoCollection = obtainConnection();
+            mongoCollection.deleteOne(new Document("uuid", guestRecord.getUuid().toString()));
+        } catch (Exception e) {
+            throw new RepositoryException("Problem podczas usuwania", e);
+        }
     }
     private MongoCollection obtainConnection() {
+
         try {
                 MongoClient mongoClient = new MongoClient();
                 MongoDatabase database = mongoClient.getDatabase(DATABASE);
@@ -79,7 +85,7 @@ public class GuestbookRepositoryMongo implements GuestbookRepository {
             throw e;
         }
     }
-    private SimpleDateFormat createFormatter() {
+    private SimpleDateFormat createFormatter() {//TODO ???
         return new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
     }
 

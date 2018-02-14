@@ -112,7 +112,7 @@ public class GuestbookRepositoryJson implements GuestbookRepository {
 
     private SimpleDateFormat createFormatter() {
         return new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
-    }
+    }//TODO ???
 
 
 
