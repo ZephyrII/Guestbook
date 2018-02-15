@@ -4,12 +4,18 @@ import guestbook.core.model.GuestRecord;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.w3c.dom.Text;
+import org.xml.sax.SAXException;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Marshaller;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,9 +34,7 @@ public class GuestbookRepositoryXML implements GuestbookRepository {
         SimpleDateFormat sdf = createFormatter();
         List<GuestRecord> gr = new ArrayList<>();
         try {
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            DocumentBuilder db = dbf.newDocumentBuilder();
-            Document doc = db.parse(new File(repositoryFile));
+            Document doc = getDocument();
             NodeList list = doc.getElementsByTagName("records").item(0).getChildNodes();
             for (int i=0; i < list.getLength(); i++) {
                 Element record = (Element)list.item(i);
@@ -49,15 +53,60 @@ public class GuestbookRepositoryXML implements GuestbookRepository {
         return gr;
     }
 
+    private Document getDocument() throws ParserConfigurationException, SAXException, IOException { //TODO zamiast try/catch???
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        DocumentBuilder db = dbf.newDocumentBuilder();
+        File file = new File(repositoryFile);
+        if(file.exists())
+            return db.parse(new File(repositoryFile));
+        else {
+            file.createNewFile();
+            return initDocument();
+        }
+    }
+
+    private Document initDocument() {
+        try {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            Document doc = db.newDocument();
+            doc.appendChild(doc.createElement("records"));
+            return doc;
+        } catch (ParserConfigurationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
     public void save(GuestRecord guestRecord) throws RepositoryException {
 
+        SimpleDateFormat sdf = createFormatter();
         try {
-            //TODO save xml using DOM
+            Document doc = getDocument();
+            Element records = (Element) doc.getElementsByTagName("records").item(0);
+            Element record = doc.createElement("guestRecord");
+            record.appendChild(createTextNode("uuid", guestRecord.getUuid().toString(), doc));
+            record.appendChild(createTextNode("firstName", guestRecord.getFirstName(), doc));
+            record.appendChild(createTextNode("lastName", guestRecord.getLastName(), doc));
+            record.appendChild(createTextNode("date", sdf.format(guestRecord.getDate()), doc));
+            records.appendChild(record);
+
+            TransformerFactory transformerFactory = TransformerFactory.newInstance();
+            Transformer transformer = transformerFactory.newTransformer();
+            DOMSource source = new DOMSource(doc);
+            StreamResult result = new StreamResult(new File(repositoryFile));
+            transformer.transform(source, result);
         } catch (Exception e) {
             throw new RepositoryException("Problem podczas zapisu", e);
         }
 
+    }
+
+    private Element createTextNode(String key, String value, Document doc) {
+        Element element = doc.createElement(key);
+        Text text = doc.createTextNode(value);
+        element.appendChild(text);
+        return element;
     }
 
     @Override

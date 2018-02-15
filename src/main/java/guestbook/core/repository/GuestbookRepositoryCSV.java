@@ -46,7 +46,7 @@ public class GuestbookRepositoryCSV implements GuestbookRepository {
 
         try {
             List<GuestRecord> records = getAllGuests();
-            Files.newOutputStream(Paths.get(repositoryFile));
+            Files.newOutputStream(Paths.get(repositoryFile)); //TODO change to truncate method
             records.stream().filter(gr->!gr.getUuid().equals(guestRecord.getUuid())).forEach(gr-> {//TODO ???
                 try {
                     save(gr);

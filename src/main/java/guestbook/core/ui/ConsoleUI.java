@@ -88,7 +88,7 @@ public class ConsoleUI {
 
     private void processReadGuest(GuestbookRepository guestbookRepository) {
         displayAll(guestbookRepository);
-        displayDetails(guestbookRepository);
+//        displayDetails(guestbookRepository);
     }
 
     private void displayDetails(GuestbookRepository guestbookRepository) {
